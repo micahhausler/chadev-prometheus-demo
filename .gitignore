@@ -1,2 +1,3 @@
-alertmanager.yaml
+alertmanager-local.yaml
+prometheus/
 *.swp

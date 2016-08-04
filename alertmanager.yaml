@@ -1,0 +1,80 @@
+global:
+  resolve_timeout: 15m
+  slack_api_url: "<slack webhook url>"
+
+# Files from which custom notification template definitions are read.
+# The last component may use a wildcard matcher, e.g. 'templates/*.tmpl'.
+#templates:
+
+# The root route on which each incoming alert enters.
+route:
+  # The root route must not have any matchers as it is the entry point for
+  # all alerts. It needs to have a receiver configured so alerts that do not
+  # match any of the sub-routes are sent to someone.
+  receiver: 'sre-team-slack'
+
+  # The labels by which incoming alerts are grouped together. For example,
+  # multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+  # be batched into a single group.
+  group_by: ['alertname', 'cluster']
+
+  # When a new group of alerts is created by an incoming alert, wait at
+  # least 'group_wait' to send the initial notification.
+  # This way ensures that you get multiple alerts for the same group that start
+  # firing shortly after another are batched together on the first
+  # notification.
+  group_wait: 30s
+
+  # When the first notification was sent, wait 'group_interval' to send a batch
+  # of new alerts that started firing for that group.
+  group_interval: 5m
+
+  # If an alert has successfully been sent, wait 'repeat_interval' to
+  # resend them.
+  repeat_interval: 3h
+
+  routes:
+  - match:
+      service: jenkins
+    receiver: jenkins-team-slack
+    routes:
+    - match:
+        severity: critical
+      receiver: jenkins-team-pagerduty
+  - match_re:
+      service: "^(prometheus|registry|cadvisor|consul)$"
+    receiver: sre-team-slack
+    routes:
+    - match:
+        severity: critical
+      receiver: sre-team-pagerduty
+
+
+# Inhibition rules allow to mute a set of alerts given that another alert is
+# firing.
+# We use this to mute any warning-level notifications if the same alert is
+# already critical.
+inhibit_rules:
+- source_match:
+    severity: 'critical'
+  target_match:
+    severity: 'warning'
+  # Apply inhibition if the alertname is the same.
+  equal: ['alertname']
+
+
+receivers:
+- name: 'sre-team-slack'
+  slack_configs:
+    - send_resolved: true
+      channel: 'tech-ops-alerts'
+- name: 'sre-team-pagerduty'
+  pagerduty_configs:
+  - service_key: "<PagerDuty Service Key>"
+- name: 'jenkins-team-slack'
+  slack_configs:
+    - send_resolved: true
+      channel: 'ci'
+- name: 'jenkins-team-pagerduty'
+  pagerduty_configs:
+  - service_key: "<PagerDuty Service Key>"

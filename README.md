@@ -19,6 +19,14 @@ open http://$(docker-machine ip):8080/
 ```
 
 ## Grafana setup
+
+The login to grafana is:
+
+```
+username: admin
+password: SuperSecret
+```
+
 Import the `dashboard.json` into Grafana as a dashboard after adding Prometheus
 as a data source. The address to give Grafana for Prometheus is
 `http://prometheus:9090`.
