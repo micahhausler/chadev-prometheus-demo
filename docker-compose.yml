@@ -1,0 +1,69 @@
+version: "2"
+services:
+  prometheus:
+    image: "prom/prometheus:v1.0.1"
+    hostname: prometheus
+    mem_limit: 134217728b
+    command: -config.file=/config.yaml -storage.local.path=/prometheus -alertmanager.url http://alertmanager:9093/
+    ports:
+    - 9090:9090
+    links:
+    - "alertmanager:alertmanager"
+    - cadvisor
+    volumes:
+    - "./prometheus.yaml:/config.yaml"
+    - "./prometheus/:/prometheus"
+    - "./rules:/rules"
+  alertmanager:
+    image: "prom/alertmanager:master"
+    command: "-config.file=/etc/alertmanager/config.yml -storage.path=/alertmanager -web.external-url=http://192.168.99.100:9093"
+    hostname: alertmanager
+    ports:
+    - 9093:9093
+    volumes:
+    - "./alertmanager.yaml:/etc/alertmanager/config.yml"
+  cadvisor:
+    image: "google/cadvisor:latest"
+    ports:
+    - '8080:8080'
+    volumes:
+    - "/:/rootfs:ro"
+    - "/sys:/sys:ro"
+    - "/var/lib/docker/:/var/lib/docker:ro"
+    - "/var/run/docker.sock:/var/run/docker.sock"
+  redis:
+    image: "redis"
+    ports:
+    - 6379:6379
+  postgres:
+    image: "postgres:9.5"
+    environment:
+      POSTGRES_PASSWORD: grafana
+      POSTGRES_USER: grafana
+    ports:
+    - 5432:5432
+  grafana:
+    hostname: grafana
+    environment:
+      GF_DATABASE_HOST: "postgres:5432"
+      GF_DATABASE_PASSWORD: grafana
+      GF_DATABASE_SSL_MODE: disable
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_USER: grafana
+      GF_SECURITY_ADMIN_PASSWORD: SuperSecret
+      GF_SECURITY_SECRET_KEY: "a4805ab98f842e901cd813b889fa3fc5107c9d75"
+      GF_SERVER_DOMAIN: grafana.docker.local
+      GF_SERVER_ROOT_URL: https://grafana.docker.local/
+      GF_SESSION_PROVIDER: redis
+      GF_SESSION_PROVIDER_CONFIG: addr=redis:6379,pool_size=100,db=grafana
+      GF_USERS_ALLOW_ORG_CREATE: 'false'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_USERS_AUTO_ASSIGN_ORG: 'true'
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Editor
+    image: "grafana/grafana:3.1.1"
+    links:
+    - prometheus
+    - postgres
+    - redis
+    ports:
+    - '3000:3000'

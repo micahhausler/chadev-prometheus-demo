@@ -1,0 +1,40 @@
+ALERT PrometheusHighCPU
+  IF container_memory_usage_bytes{name=~"prometheus_prometheus_.*"}/container_spec_memory_limit_bytes{name=~"prometheus_prometheus_.*"} > 0.3
+  FOR 3m
+  LABELS {severity="warning", service="prometheus"}
+  ANNOTATIONS {
+    summary = "Prometheus CPU is at 30% for 3min"
+  }
+
+ALERT PrometheusHighCPU
+  IF container_memory_usage_bytes{name=~"prometheus_prometheus_.*"}/container_spec_memory_limit_bytes{name=~"prometheus_prometheus_.*"} > 0.3
+  FOR 15m
+  LABELS {severity="critical", service="prometheus"}
+  ANNOTATIONS {
+    summary = "Prometheus CPU is at 30% for 5min"
+  }
+
+
+ALERT HighJenkinsSlavePressure
+  IF jenkins_executor_in_use_value/jenkins_executor_count_value == 1 and jenkins_queue_size_value{job="jenkins-master"} >= 4
+  FOR 30m
+  LABELS {severity="warning", service="jenkins"}
+  ANNOTATIONS {
+    summary = "All jenkins slaves used and queue >= 4 for 30 min",
+  }
+
+ALERT HighJenkinsSlavePressure
+  IF jenkins_executor_in_use_value/jenkins_executor_count_value == 1 and jenkins_queue_size_value{job="jenkins-master"} >= 4
+  FOR 60m
+  LABELS {severity="critical", service="jenkins"}
+  ANNOTATIONS {
+    summary = "All jenkins slaves used and queue >= 4 for 1 hour",
+  }
+
+ALERT JenkinsJobsNotRunning
+  IF jenkins_executor_in_use_value/jenkins_executor_count_value == 0 and jenkins_queue_stuck_value{job="jenkins-master"} >= 3
+  FOR 60m
+  LABELS {severity="warning", service="jenkins"}
+  ANNOTATIONS {
+    summary = "No jenkins slaves used and queue count >= 3 for 1 hour",
+  }
