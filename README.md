@@ -1,5 +1,9 @@
 # Chadev Prometheus Demo
 
+Talk given 8/4/2016 at Chadev Meetup, Chattanooga, TN
+
+- [Youtube link](https://www.youtube.com/watch?v=lHTCeRKq0lc)
+- [Slides](https://speakerdeck.com/micahhausler/prometheus-and-time-series-monitoring)
 
 ## Setup
 
